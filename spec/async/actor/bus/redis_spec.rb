@@ -20,20 +20,8 @@
 
 require 'async/actor/bus/redis'
 
-require_relative 'counter'
+require_relative 'shared_examples'
 
 RSpec.describe Async::Actor::Bus::Redis, timeout: 5 do
-	include_context Async::RSpec::Reactor
-	
-	it "can setup counter and invoke functions" do
-		subject.register('value', Counter.new)
-		
-		proxy = subject.lookup('value')
-		
-		proxy.increment
-		
-		expect(proxy.value).to be == 1
-		
-		subject.close
-	end
+	it_behaves_like Async::Actor::Bus
 end

@@ -26,6 +26,10 @@ module Async
 					@instances = {}
 				end
 				
+				def close
+					@instances.clear
+				end
+				
 				def register(name, instance)
 					@instances[name] = instance
 				end

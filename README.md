@@ -1,6 +1,6 @@
 # Async::Actor
 
-Implements the actor pattern using an asynchronous message bus. Local messaging is handled directly while distributed messaging uses redis. Built on top of [async] and [async-actor].
+Implements the actor pattern using an asynchronous message bus. Local messaging is handled directly while distributed messaging uses redis. Built on top of [async] and [async-redis].
 
 [![Build Status](https://secure.travis-ci.org/socketry/async-actor.svg)](https://travis-ci.org/socketry/async-actor)
 [![Code Climate](https://codeclimate.com/github/socketry/async-actor.svg)](https://codeclimate.com/github/socketry/async-actor)

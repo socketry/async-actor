@@ -20,7 +20,6 @@
 
 require_relative 'local'
 
-require 'msgpack'
 require 'async/redis/client'
 
 module Async
@@ -33,6 +32,8 @@ module Async
 					
 					@instances = {}
 					@tasks = []
+					
+					@wrapper = Marshal
 				end
 				
 				def close
@@ -49,25 +50,25 @@ module Async
 						
 						while request = @client.call("BLPOP", invoke_queue_name, 0)
 							# puts "Request: #{request}"
-							what, args, response_queue = MessagePack.unpack(request[1])
+							what, args, response_queue = @wrapper.load(request[1])
 							
 							case what
 							when 'send'
 								begin
 									result = instance.send(*args)
-									@client.call("RPUSH", response_queue, ["return", result].to_msgpack)
+									@client.call("RPUSH", response_queue, @wrapper.dump(["return", result]))
 								rescue
-									@client.call("RPUSH", response_queue, ["error", $!].to_msgpack)
+									@client.call("RPUSH", response_queue, @wrapper.dump(["error", $!]))
 								end
 							when 'resume'
 								begin
 									result = instance.send(*args) do |*args|
-										@client.call("RPUSH", response_queue, ["yield", args].to_msgpack)
+										@client.call("RPUSH", response_queue, @wrapper.dump(["yield", args]))
 									end
 									
-									@client.call("RPUSH", response_queue, ["return", result].to_msgpack)
+									@client.call("RPUSH", response_queue, @wrapper.dump(["return", result]))
 								rescue
-									@client.call("RPUSH", response_queue, ["error", $!].to_msgpack)
+									@client.call("RPUSH", response_queue, @wrapper.dump(["error", $!]))
 								end
 							end
 						end
@@ -90,11 +91,11 @@ module Async
 					
 					response_queue_name = "#{remote_name}:invoke\##{id}"
 					
-					@client.call("RPUSH", invoke_queue_name, [block_given? ? "resume" : "send", args, response_queue_name].to_msgpack)
+					@client.call("RPUSH", invoke_queue_name, @wrapper.dump([block_given? ? "resume" : "send", args, response_queue_name]))
 					
 					while response = @client.call("BLPOP", response_queue_name, 0)
 						# puts "Response: #{response}"
-						what, args = MessagePack.unpack(response[1])
+						what, args = @wrapper.load(response[1])
 						
 						case what
 						when 'error'

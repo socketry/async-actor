@@ -5,9 +5,9 @@ RSpec.shared_examples_for Async::Actor::Bus do
 	include_context Async::RSpec::Reactor
 	
 	it "can setup counter and invoke functions" do
-		subject.register('value', Counter.new)
+		subject['value'] = Counter.new
 		
-		proxy = subject.lookup('value')
+		proxy = subject['value']
 		
 		proxy.increment
 		

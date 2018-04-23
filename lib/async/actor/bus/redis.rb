@@ -19,6 +19,7 @@
 # THE SOFTWARE.
 
 require_relative 'local'
+require_relative 'wrapper'
 
 require 'async/redis/client'
 
@@ -26,24 +27,34 @@ module Async
 	module Actor
 		module Bus
 			class Redis
-				def initialize(client = Async::Redis::Client.new, root = "actors")
+				def initialize(root = "actors", client = Async::Redis::Client.new)
 					@client = client
 					@root = root
 					
-					@instances = {}
+					@actors = {}
 					@tasks = []
 					
-					@wrapper = Marshal
+					@wrapper = Wrapper.new(self)
 				end
 				
 				def close
 					@tasks.each(&:stop)
-					@instances.clear
+					@actors.clear
 					@client.close
 				end
 				
-				def register(name, instance)
-					@instances[name] = instance
+				def temporary(actor)
+					name = actor.object_id.to_s
+					
+					unless @actors.key? name
+						self[name] = actor
+					end
+					
+					return name
+				end
+				
+				def []= name, actor
+					@actors[name] = actor
 					
 					@tasks << Reactor.run do
 						invoke_queue_name = "#{@root}:#{name}:invoke"
@@ -55,14 +66,14 @@ module Async
 							case what
 							when 'send'
 								begin
-									result = instance.send(*args)
+									result = actor.send(*args)
 									@client.call("RPUSH", response_queue, @wrapper.dump(["return", result]))
 								rescue
 									@client.call("RPUSH", response_queue, @wrapper.dump(["error", $!]))
 								end
 							when 'resume'
 								begin
-									result = instance.send(*args) do |*args|
+									result = actor.send(*args) do |*args|
 										@client.call("RPUSH", response_queue, @wrapper.dump(["yield", args]))
 									end
 									
@@ -73,14 +84,16 @@ module Async
 							end
 						end
 					end
+					
+					Proxy.new(self, name)
 				end
 				
-				def lookup(name)
-					#if instance = @instances[name]
-					#	return Local::Proxy.new(instance)
-					#else
+				def [] name
+					# if actor = @actors[name]
+					# 	return Local::Proxy.new(actor)
+					# else
 						return Proxy.new(self, name)
-					#end
+					# end
 				end
 				
 				def invoke(name, args, &block)
@@ -99,28 +112,13 @@ module Async
 						
 						case what
 						when 'error'
-							raise Error.new(args)
+							raise args
 						when 'return'
 							@client.call("DEL", response_queue_name)
 							return args
 						when 'yield'
 							yield *args
 						end
-					end
-				end
-				
-				class Proxy < BasicObject
-					def initialize(bus, name)
-						@bus = bus
-						@name = name
-					end
-					
-					def method_missing(*args, &block)
-						@bus.invoke(@name, args, &block)
-					end
-					
-					def respond_to?(*args)
-						@bus.invoke(@name, ["respond_to?", *args])
 					end
 				end
 			end

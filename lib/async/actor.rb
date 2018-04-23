@@ -18,4 +18,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-require "async/actor/version"
+require_relative 'actor/version'
+require_relative 'actor/bus/local'
+require_relative 'actor/bus/redis'

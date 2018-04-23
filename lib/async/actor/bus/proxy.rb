@@ -18,44 +18,25 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-require_relative 'proxy'
-
 module Async
 	module Actor
 		module Bus
-			class Local
-				def initialize
-					@instances = {}
+			class Proxy < BasicObject
+				def initialize(bus, name)
+					@bus = bus
+					@name = name
 				end
 				
-				def close
-					@instances.clear
+				def inspect
+					"[Proxy #{method_missing(:inspect)}]"
 				end
 				
-				def []= name, instance
-					@instances[name] = instance
-					
-					Proxy.new(self, name, instance)
+				def method_missing(*args, &block)
+					@bus.invoke(@name, args, &block)
 				end
 				
-				def [] name
-					Proxy.new(self, name, @instances[name])
-				end
-				
-				class Proxy < Bus::Proxy
-					def initialize(name, bus, instance)
-						super(name, bus)
-						
-						@instance = instance
-					end
-					
-					def method_missing(name, *args, &block)
-						@instance.send(name, *args, &block)
-					end
-					
-					def respond_to?(*args)
-						@instance.respond_to?(*args)
-					end
+				def respond_to?(*args)
+					@bus.invoke(@name, ["respond_to?", *args])
 				end
 			end
 		end

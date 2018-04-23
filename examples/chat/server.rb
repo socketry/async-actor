@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 
 require 'async/reactor'
+require 'async/queue'
 require_relative '../../lib/async/actor'
 
 class Room
@@ -11,17 +12,21 @@ class Room
 	end
 	
 	def post(user, message)
+		puts "Posting message from #{user}: #{message}"
 		@users.each do |user, queue|
 			queue.enqueue([user, message])
 		end
 	end
 	
 	def join(user)
+		puts "User joined: #{user}"
 		queue = @users[user] = Async::Queue.new
 		
 		while event = queue.dequeue
 			yield event
 		end
+		
+		return nil
 	ensure
 		@users.delete(user)
 	end

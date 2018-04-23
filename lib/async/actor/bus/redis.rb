@@ -35,6 +35,8 @@ module Async
 					@tasks = []
 					
 					@wrapper = Wrapper.new(self)
+					
+					# @id = @client.call("INCR", "#{root}:bus:id")
 				end
 				
 				def close
@@ -56,30 +58,32 @@ module Async
 				def []= name, actor
 					@actors[name] = actor
 					
-					@tasks << Reactor.run do
+					@tasks << Reactor.run do |task|
 						invoke_queue_name = "#{@root}:#{name}:invoke"
 						
 						while request = @client.call("BLPOP", invoke_queue_name, 0)
-							# puts "Request: #{request}"
-							what, args, response_queue = @wrapper.load(request[1])
-							
-							case what
-							when 'send'
-								begin
-									result = actor.send(*args)
-									@client.call("RPUSH", response_queue, @wrapper.dump(["return", result]))
-								rescue
-									@client.call("RPUSH", response_queue, @wrapper.dump(["error", $!]))
-								end
-							when 'resume'
-								begin
-									result = actor.send(*args) do |*args|
-										@client.call("RPUSH", response_queue, @wrapper.dump(["yield", args]))
+							task.async do
+								# puts "Request: #{request}"
+								what, args, response_queue = @wrapper.load(request[1])
+								
+								case what
+								when 'send'
+									begin
+										result = actor.send(*args)
+										@client.call("RPUSH", response_queue, @wrapper.dump(["return", result]))
+									rescue
+										@client.call("RPUSH", response_queue, @wrapper.dump(["error", $!]))
 									end
-									
-									@client.call("RPUSH", response_queue, @wrapper.dump(["return", result]))
-								rescue
-									@client.call("RPUSH", response_queue, @wrapper.dump(["error", $!]))
+								when 'resume'
+									begin
+										result = actor.send(*args) do |*args|
+											@client.call("RPUSH", response_queue, @wrapper.dump(["yield", args]))
+										end
+										
+										@client.call("RPUSH", response_queue, @wrapper.dump(["return", result]))
+									rescue
+										@client.call("RPUSH", response_queue, @wrapper.dump(["error", $!]))
+									end
 								end
 							end
 						end
@@ -100,6 +104,7 @@ module Async
 					remote_name = "#{@root}:#{name}"
 					invoke_queue_name = "#{remote_name}:invoke"
 					
+					puts "Invoke remote #{name} (#{remote_name}) with #{args.inspect}"
 					id = @client.call("INCR", "#{remote_name}:calls")
 					
 					response_queue_name = "#{remote_name}:invoke\##{id}"

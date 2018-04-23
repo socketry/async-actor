@@ -30,7 +30,7 @@ module Async
 					@bus = bus
 					
 					self.register_type(0x00, Symbol)
-					self.register_type(0x01, Async::Actor, packer: @bus.method(:temporary), unpacker: @bus.method(:[]))
+					self.register_type(0x01, Object, packer: @bus.method(:temporary), unpacker: @bus.method(:[]))
 					self.register_type(0x02, Exception,
 						packer: ->(exception){Marshal.dump(exception)},
 						unpacker: ->(data){Marshal.load(data)},

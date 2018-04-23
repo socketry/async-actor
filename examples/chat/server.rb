@@ -5,8 +5,6 @@ require 'async/queue'
 require_relative '../../lib/async/actor'
 
 class Room
-	include Async::Actor
-	
 	def initialize
 		@users = {}
 	end
@@ -25,16 +23,12 @@ class Room
 		while event = queue.dequeue
 			yield event
 		end
-		
-		return nil
 	ensure
 		@users.delete(user)
 	end
 end
 
 class Rooms
-	include Async::Actor
-	
 	def initialize
 		@named = {'ruby' => Room.new}
 	end
@@ -50,5 +44,6 @@ end
 
 Async::Reactor.run do
 	bus = Async::Actor::Bus::Redis.new('chat')
+	
 	bus[:rooms] = Rooms.new
 end

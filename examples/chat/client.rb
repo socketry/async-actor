@@ -16,8 +16,8 @@ Async::Reactor.run do |task|
 	room = rooms['ruby']
 	
 	task.async do
-		room.join(user) do |message|
-			puts message
+		room.join(user) do |from_user, message|
+			puts "#{from_user}: #{message}"
 		end
 	end
 	
@@ -25,9 +25,7 @@ Async::Reactor.run do |task|
 		Async::IO::Generic.new($stdin)
 	)
 	
-	puts "Waiting for input..."
 	while line = stdin.read_until("\n")
-		puts "Sending text: #{line}"
 		room.post(user, line)
 	end
 end

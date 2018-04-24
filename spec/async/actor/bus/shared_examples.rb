@@ -17,6 +17,43 @@ RSpec.shared_examples_for Async::Actor::Bus do
 		subject.close
 	end
 	
+	it "can enumerate items using yield" do
+		subject[:counter] = Counter.new
+		
+		proxy = subject[:counter]
+		
+		proxy.increment(3)
+		
+		items = []
+		proxy.each do |item|
+			items << item
+		end
+		
+		expect(items).to be == [0, 1, 2]
+		
+		subject.close
+	end
+	
+	it "can enumerate items using yield and break" do
+		subject[:counter] = Counter.new
+		
+		proxy = subject[:counter]
+		
+		proxy.increment(3)
+		
+		items = []
+		result = proxy.each do |item|
+			items << item
+			
+			break 'my bones' if item == 1
+		end
+		
+		expect(items).to be == [0, 1]
+		expect(result).to be == 'my bones'
+		
+		subject.close
+	end
+	
 	let(:user) {'alice'}
 	let(:room) {'ruby'}
 	

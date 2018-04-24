@@ -147,15 +147,21 @@ module Async
 				
 				protected
 				
+				def delete(queue)
+					Async.logger.debug(self) {"DEL #{queue.ljust(40)}"}
+					
+					@client.call("DEL", queue)
+				end
+				
 				def push(queue, object)
-					Async.logger.debug(self) {"PUSH #{queue.ljust(64)} -> #{object}"}
+					Async.logger.debug(self) {"PUSH #{queue.ljust(40)} -> #{object}"}
 					
 					@client.call("RPUSH", queue, @wrapper.dump(object))
 				end
 				
 				def pop(queue)
 					if response = @client.call("BLPOP", queue, 0)
-						Async.logger.debug(self) {" POP #{queue.ljust(64)} <- #{@wrapper.load(response[1])}"}
+						Async.logger.debug(self) {" POP #{queue.ljust(40)} <- #{@wrapper.load(response[1])}"}
 						
 						@wrapper.load(response[1])
 					end

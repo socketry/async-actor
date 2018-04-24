@@ -6,7 +6,15 @@ class Counter
 	
 	attr :value
 	
-	def increment
-		@value += 1
+	def increment(amount = 1)
+		@value += amount
+	end
+	
+	def each
+		return to_enum unless block_given?
+		
+		@value.times do |i|
+			yield i
+		end
 	end
 end

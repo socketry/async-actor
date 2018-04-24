@@ -2,7 +2,6 @@
 
 require 'async/reactor'
 require 'async/queue'
-require_relative '../../lib/async/actor'
 
 class Room
 	def initialize

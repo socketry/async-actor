@@ -36,17 +36,21 @@ module Async
 					
 					@wrapper = Wrapper.new(self)
 					
-					# @id = @client.call("INCR", "#{root}:bus:id")
+					@id = @client.call("INCR", "#{root}:bus:count")
 				end
 				
 				def close
+					#keys = @client.call("KEYS", "#{@root}:bus:#{@id}:*")
+					#puts "Removing temporaries: #{keys.inspect}"
+					# @client.call("DEL", *keys) if keys.any?
+					
 					@tasks.each(&:stop)
 					@actors.clear
 					@client.close
 				end
 				
 				def temporary(actor)
-					name = actor.object_id.to_s
+					name = "bus:#{@id}:#{actor.object_id}"
 					
 					unless @actors.key? name
 						self[name] = actor
@@ -61,29 +65,34 @@ module Async
 					@tasks << Reactor.run do |task|
 						invoke_queue_name = "#{@root}:#{name}:invoke"
 						
-						while request = @client.call("BLPOP", invoke_queue_name, 0)
-							task.async do
-								# puts "Request: #{request}"
-								what, args, response_queue = @wrapper.load(request[1])
+						while request = pop(invoke_queue_name)
+							@tasks << task.async do
+								args, response_queue, yield_queue = request
+								task.annotate("Handling #{args.first}...")
 								
-								case what
-								when 'send'
-									begin
-										result = actor.send(*args)
-										@client.call("RPUSH", response_queue, @wrapper.dump(["return", result]))
-									rescue
-										@client.call("RPUSH", response_queue, @wrapper.dump(["error", $!]))
-									end
-								when 'resume'
-									begin
+								begin
+									if yield_queue
 										result = actor.send(*args) do |*args|
-											@client.call("RPUSH", response_queue, @wrapper.dump(["yield", args]))
+											push(response_queue, ['yield', args])
+											
+											response = pop(yield_queue)
+											what, args = response
+											
+											if what == 'error'
+												raise args
+											elsif what == 'return'
+												return args
+											elsif what == 'next'
+												next args
+											end
 										end
-										
-										@client.call("RPUSH", response_queue, @wrapper.dump(["return", result]))
-									rescue
-										@client.call("RPUSH", response_queue, @wrapper.dump(["error", $!]))
+									else
+										result = actor.send(*args)
 									end
+									
+									push(response_queue, ['return', result])
+								rescue
+									push(response_queue, ['error', $!])
 								end
 							end
 						end
@@ -104,16 +113,15 @@ module Async
 					remote_name = "#{@root}:#{name}"
 					invoke_queue_name = "#{remote_name}:invoke"
 					
-					puts "Invoke remote #{name} (#{remote_name}) with #{args.inspect}"
 					id = @client.call("INCR", "#{remote_name}:calls")
 					
-					response_queue_name = "#{remote_name}:invoke\##{id}"
+					response_queue_name = "#{remote_name}:invoke:#{id}"
+					yield_queue_name = block_given? ? "#{remote_name}:yield:#{id}" : nil
 					
-					@client.call("RPUSH", invoke_queue_name, @wrapper.dump([block_given? ? "resume" : "send", args, response_queue_name]))
+					push(invoke_queue_name, [args, response_queue_name, yield_queue_name])
 					
-					while response = @client.call("BLPOP", response_queue_name, 0)
-						# puts "Response: #{response}"
-						what, args = @wrapper.load(response[1])
+					while response = pop(response_queue_name)
+						what, args = response
 						
 						case what
 						when 'error'
@@ -122,8 +130,34 @@ module Async
 							@client.call("DEL", response_queue_name)
 							return args
 						when 'yield'
-							yield *args
+							begin
+								result = yield *args
+								push(yield_queue_name, ['next', result])
+							rescue
+								push(yield_queue_name, ['error', $!])
+							end
 						end
+					end
+					
+					if yield_queue_name
+						push(yield_queue_name, ['return', result])
+					end
+				ensure
+				end
+				
+				protected
+				
+				def push(queue, object)
+					Async.logger.debug(self) {"PUSH #{queue.ljust(64)} -> #{object}"}
+					
+					@client.call("RPUSH", queue, @wrapper.dump(object))
+				end
+				
+				def pop(queue)
+					if response = @client.call("BLPOP", queue, 0)
+						Async.logger.debug(self) {" POP #{queue.ljust(64)} <- #{@wrapper.load(response[1])}"}
+						
+						@wrapper.load(response[1])
 					end
 				end
 			end

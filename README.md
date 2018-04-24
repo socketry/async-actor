@@ -27,6 +27,14 @@ Or install it yourself as:
 
 ## Usage
 
+### What is a bus?
+
+A bus is a shared address space for multiple actors to co-exist. A bus needs to provide communication facilities so that actors can interact with each other. There are other properties of the bus which may affect behaviour: persistence, reliability, durability, etc.
+
+### What is an actor?
+
+Any non-primative Ruby object can be an actor. Primitive objects such as integers, strings, arrays, hashs, are serialized and sent over the wire by copy. Any other object is registered into the bus and a token is sent across the wire.
+
 ## Contributing
 
 1. Fork it

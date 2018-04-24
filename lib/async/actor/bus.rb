@@ -1,4 +1,4 @@
-# Copyright, 2017, by Samuel G. D. Williams. <http://www.codeotaku.com>
+# Copyright, 2018, by Samuel G. D. Williams. <http://www.codeotaku.com>
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -18,31 +18,5 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-require 'msgpack'
-
-module Async
-	module Actor
-		module Bus
-			class Wrapper < MessagePack::Factory
-				def initialize(bus)
-					super()
-					
-					@bus = bus
-					
-					self.register_type(0x00, Object, packer: @bus.method(:temporary), unpacker: @bus.method(:[]))
-					
-					self.register_type(0x01, Symbol)
-					self.register_type(0x02, Exception,
-						packer: ->(exception){Marshal.dump(exception)},
-						unpacker: ->(data){Marshal.load(data)},
-					)
-					
-					self.register_type(0x03, Class,
-						packer: ->(klass){Marshal.dump(klass)},
-						unpacker: ->(data){Marshal.load(data)},
-					)
-				end
-			end
-		end
-	end
-end
+require_relative 'bus/local'
+require_relative 'bus/redis'

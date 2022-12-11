@@ -90,9 +90,14 @@ module Async
 										result = actor.send(*args)
 									end
 									
-									push(response_queue, ['return', result])
+									push(response_queue, ['return', result]) if response_queue
 								rescue
-									push(response_queue, ['error', $!])
+									if response_queue
+										push(response_queue, ['error', $!])
+									else
+										Async.logger.error {"#{$!.class}: #{$!.message} #{$!.backtrace.join("\n")}"}
+										Async.logger.error {$!.backtrace.join("\n")}
+									end
 								end
 							end
 						end

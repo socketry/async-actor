@@ -32,6 +32,10 @@ module Async
 					@instances.clear
 				end
 				
+				def temporary(instance)
+					self[instance.object_id] = object_id
+				end
+				
 				def []= name, instance
 					@instances[name] = instance
 					

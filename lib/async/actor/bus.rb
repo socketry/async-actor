@@ -19,4 +19,4 @@
 # THE SOFTWARE.
 
 require_relative 'bus/local'
-require_relative 'bus/redis'
+require_relative 'bus/remote'

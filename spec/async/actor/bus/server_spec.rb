@@ -18,10 +18,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-require 'async/actor/bus/redis'
+require 'async/actor/bus/server'
 
 require_relative 'shared_examples'
 
-RSpec.describe Async::Actor::Bus::Redis, timeout: 5 do
+RSpec.describe Async::Actor::Bus::Server, timeout: 5 do
 	it_behaves_like Async::Actor::Bus
 end

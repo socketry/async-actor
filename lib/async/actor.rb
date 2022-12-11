@@ -20,4 +20,4 @@
 
 require_relative 'actor/version'
 require_relative 'actor/bus/local'
-require_relative 'actor/bus/redis'
+require_relative 'actor/bus/server'

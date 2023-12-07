@@ -14,6 +14,8 @@ This is where `Async::Actor` comes in. It provides a simple actor model, which u
 
 Please see the [project documentation](https://socketry.github.io/async-actor/) for more details.
 
+  - [Getting Started](https://socketry.github.io/async-actor/guides/getting-started/index) - This guide explains how to use `async-actor` for asynchronous programming.
+
 ## Contributing
 
 We welcome contributions to this project.

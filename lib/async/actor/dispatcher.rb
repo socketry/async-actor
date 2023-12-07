@@ -13,7 +13,6 @@ module Async
 				end
 				
 				def call(id)
-					$stderr.puts "Closing queue #{@queue} and thread #{@thread}"
 					@queue.close
 					@thread.join
 				end
@@ -29,16 +28,14 @@ module Async
 				ObjectSpace.define_finalizer(self, Finalizer.new(@queue, @thread))
 			end
 			
-			def public_send(*arguments, **options, &block)
-				result = Variable.new
+			def method_missing(*arguments, ignore_return: false, **options, &block)
+				unless ignore_return
+					result = Variable.new
+				end
 				
 				@queue.push([arguments, options, block, result])
 				
-				return result.get
-			end
-			
-			def public_send_ignoring_return(*arguments, **options, &block)
-				@queue.push([arguments, options, block])
+				return result&.get
 			end
 			
 			def __start__(queue)

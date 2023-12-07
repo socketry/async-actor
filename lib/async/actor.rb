@@ -4,12 +4,12 @@
 # Copyright, 2023, by Samuel Williams.
 
 require_relative 'actor/version'
-require_relative 'actor/thread'
+require_relative 'actor/proxy'
 
 module Async
 	module Actor
-		def self.start
-			Thread.new(instance)
+		def self.new(instance)
+			Proxy.new(instance)
 		end
 	end
 end

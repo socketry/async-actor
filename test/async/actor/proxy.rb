@@ -26,7 +26,7 @@ describe Async::Actor::Proxy do
 		it "can ignore the result" do
 			actor[:foo] = 1
 			
-			expect(actor.delete(:foo, ignore_return: true)).to be == nil
+			expect(actor.delete(:foo, return_value: :ignore)).to be == nil
 		end
 	end
 	

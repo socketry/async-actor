@@ -21,34 +21,40 @@ module Async
 					@thread.join
 				end
 			end
-				
+			
 			def initialize(target)
 				@target = target
 				
 				@queue = ::Thread::Queue.new
-				@thread = self.__start__(@queue)
+				@thread = __start__
 				
 				# Define a finalizer to ensure the thread is closed:
 				::ObjectSpace.define_finalizer(self, Finalizer.new(@queue, @thread))
 			end
 			
-			def method_missing(*arguments, ignore_return: false, **options, &block)
-				unless ignore_return
+			# @parameter return_value [Symbol] One of :ignore, :promise or :wait.
+			def method_missing(*arguments, return_value: :wait, **options, &block)
+				unless return_value == :ignore
 					result = Variable.new
 				end
 				
 				@queue.push([arguments, options, block, result])
 				
-				return result&.get
+				if return_value == :promise
+					return result
+				else
+					return result&.get
+				end
 			end
 			
-			def __start__(queue)
+			protected
+			
+			def __start__
 				::Thread.new do
 					::Kernel.Sync do |task|
-						while operation = queue.pop
+						while operation = @queue.pop
 							task.async do
 								arguments, options, block, result = operation
-								
 								Variable.fulfill(result) do
 									@target.public_send(*arguments, **options, &block)
 								end
@@ -56,6 +62,11 @@ module Async
 						end
 					end
 				end
+			end
+			
+			def __stop__
+				@queue.close
+				@thread.join
 			end
 		end
 	end

@@ -63,11 +63,6 @@ module Async
 					end
 				end
 			end
-			
-			def __stop__
-				@queue.close
-				@thread.join
-			end
 		end
 	end
 end

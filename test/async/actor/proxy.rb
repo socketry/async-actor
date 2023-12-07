@@ -28,6 +28,14 @@ describe Async::Actor::Proxy do
 			
 			expect(actor.delete(:foo, return_value: :ignore)).to be == nil
 		end
+		
+		it "can wait for the result" do
+			actor[:foo] = 1
+			
+			variable = actor.delete(:foo, return_value: :promise)
+			
+			expect(variable.get).to be == 1
+		end
 	end
 	
 	describe Async::Actor::Proxy::Finalizer do

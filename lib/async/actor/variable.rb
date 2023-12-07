@@ -1,6 +1,7 @@
-require 'async'
+# frozen_string_literal: true
 
-require_relative 'proxy'
+# Released under the MIT License.
+# Copyright, 2023, by Samuel Williams.
 
 module Async
 	module Actor

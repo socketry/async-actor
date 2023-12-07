@@ -1,3 +1,8 @@
+# frozen_string_literal: true
+
+# Released under the MIT License.
+# Copyright, 2023, by Samuel Williams.
+
 require 'async/actor/variable'
 
 describe Async::Actor::Variable do

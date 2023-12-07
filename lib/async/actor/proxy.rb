@@ -1,16 +1,61 @@
+# frozen_string_literal: true
+
+# Released under the MIT License.
+# Copyright, 2023, by Samuel Williams.
+
+require 'async'
+
+require_relative 'variable'
+
 module Async
 	module Actor
-		class Proxy
-			def initialize(instance)
-				@instance = instance
+		class Proxy < BasicObject
+			class Finalizer
+				def initialize(queue, thread)
+					@queue = queue
+					@thread = thread
+				end
+				
+				def call(id)
+					@queue.close
+					@thread.join
+				end
+			end
+				
+			def initialize(target)
+				@target = target
+				
+				@queue = ::Thread::Queue.new
+				@thread = self.__start__(@queue)
+				
+				# Define a finalizer to ensure the thread is closed:
+				::ObjectSpace.define_finalizer(self, Finalizer.new(@queue, @thread))
 			end
 			
-			def method_missing(*arguments, **options, &block)
-				@instance.public_send(*arguments, **options, &block)
+			def method_missing(*arguments, ignore_return: false, **options, &block)
+				unless ignore_return
+					result = Variable.new
+				end
+				
+				@queue.push([arguments, options, block, result])
+				
+				return result&.get
 			end
 			
-			def respond_to_missing?(name, include_private = false)
-				@instance.respond_to?(name, include_private)
+			def __start__(queue)
+				::Thread.new do
+					::Kernel.Sync do |task|
+						while operation = queue.pop
+							task.async do
+								arguments, options, block, result = operation
+								
+								Variable.fulfill(result) do
+									@target.public_send(*arguments, **options, &block)
+								end
+							end
+						end
+					end
+				end
 			end
 		end
 	end

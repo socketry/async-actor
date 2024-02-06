@@ -50,8 +50,13 @@ module Async
 			protected
 			
 			def __kill__
-				@queue&.close
-				@thread&.join
+				@guard.synchronize do
+					@queue&.close
+					@queue = nil
+					
+					@thread&.kill
+					@thread = nil
+				end
 			end
 			
 			def __start__

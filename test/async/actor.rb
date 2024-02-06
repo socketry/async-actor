@@ -6,4 +6,14 @@ describe Async::Actor do
 		
 		expect(actor).to be_a(Array)
 	end
+	
+	it "can restart actor if thread is killed" do
+		actor = Async::Actor.new(Array.new)
+		
+		expect(actor).to be_a(Array)
+		
+		actor.__send__(:__kill__)
+		
+		expect(actor).to be_a(Array)
+	end
 end

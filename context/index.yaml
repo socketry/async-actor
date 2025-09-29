@@ -1,0 +1,13 @@
+# Automatically generated context index for Utopia::Project guides.
+# Do not edit then files in this directory directly, instead edit the guides and then run `bake utopia:project:agent:context:update`.
+---
+description: A multi-threaded actor implementation where each actor has it's own event
+  loop.
+metadata:
+  documentation_uri: https://socketry.github.io/async-actor/
+  funding_uri: https://github.com/sponsors/ioquatix
+  source_code_uri: https://github.com/socketry/async-actor.git
+files:
+- path: getting-started.md
+  title: Getting Started
+  description: This guide explains how to use `async-actor` for asynchronous programming.

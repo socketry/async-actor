@@ -19,11 +19,11 @@ $ bundle add async-actor
 Any existing object can be wrapped into an actor:
 
 ```ruby
-require 'async/actor'
+require "async/actor"
 
-require 'cgi'
-require 'net/http'
-require 'json'
+require "cgi"
+require "net/http"
+require "json"
 
 class Wikipedia
 	def summary_url(title)
@@ -31,13 +31,13 @@ class Wikipedia
 	end
 	
 	def lookup(title)
-		JSON.parse(Net::HTTP.get(summary_url(title))).fetch('extract')
+		JSON.parse(Net::HTTP.get(summary_url(title))).fetch("extract")
 	end
 end
 
 wikipedia = Async::Actor.new(Wikipedia.new)
 
-puts wikipedia.lookup('Ruby_(programming_language)')
+puts wikipedia.lookup("Ruby_(programming_language)")
 ```
 
 The above code looks deceptively simple, however `wikipedia.lookup` actually sends a message to the actor using a message queue. The actor then processes the message in a separate task, which is scheduled on the event loop. This allows the actor to process messages concurrently. When the result is ready, the actor notifies the caller with the result.

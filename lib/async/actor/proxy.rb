@@ -3,9 +3,9 @@
 # Released under the MIT License.
 # Copyright, 2023, by Samuel Williams.
 
-require 'async'
+require "async"
 
-require_relative 'variable'
+require_relative "variable"
 
 module Async
 	module Actor

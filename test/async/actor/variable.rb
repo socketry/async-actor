@@ -3,7 +3,7 @@
 # Released under the MIT License.
 # Copyright, 2023, by Samuel Williams.
 
-require 'async/actor/variable'
+require "async/actor/variable"
 
 describe Async::Actor::Variable do
 	let(:variable) {subject.new}

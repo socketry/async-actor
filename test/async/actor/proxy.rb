@@ -3,7 +3,7 @@
 # Released under the MIT License.
 # Copyright, 2023, by Samuel Williams.
 
-require 'async/actor/proxy'
+require "async/actor/proxy"
 
 describe Async::Actor::Proxy do
 	with "Hash instance" do

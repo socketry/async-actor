@@ -3,8 +3,8 @@
 # Released under the MIT License.
 # Copyright, 2023, by Samuel Williams.
 
-require_relative 'actor/version'
-require_relative 'actor/proxy'
+require_relative "actor/version"
+require_relative "actor/proxy"
 
 module Async
 	module Actor

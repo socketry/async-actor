@@ -3,37 +3,42 @@
 # Released under the MIT License.
 # Copyright, 2023, by Samuel Williams.
 
-require "async/actor/variable"
+require "async"
 
-describe Async::Actor::Variable do
-	let(:variable) {subject.new}
+describe Async::Promise do
+	let(:promise) {subject.new}
 	
 	it "can be fulfilled" do
-		Async::Actor::Variable.fulfill(variable) do
-			:foo
+		begin
+			result = :foo
+			promise.resolve(result)
+		rescue => error
+			promise.reject(error)
 		end
 		
-		expect(variable.get).to be == :foo
+		expect(promise.wait).to be == :foo
 	end
 	
 	it "can be failed" do
-		Async::Actor::Variable.fulfill(variable) do
+		begin
 			raise "foo"
+		rescue => error
+			promise.reject(error)
 		end
 		
 		expect do
-			variable.get
+			promise.wait
 		end.to raise_exception(RuntimeError)
 	end
 	
 	it "can be fulfilled asynchronously" do
 		thread = Thread.new do
-			variable.get
+			promise.wait
 		end
 		
 		Thread.pass until thread.status == "sleep"
 		
-		variable.set(:foo)
+		promise.resolve(:foo)
 		
 		expect(thread.value).to be == :foo
 	end

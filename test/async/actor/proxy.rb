@@ -32,9 +32,9 @@ describe Async::Actor::Proxy do
 		it "can wait for the result" do
 			actor[:foo] = 1
 			
-			variable = actor.delete(:foo, return_value: :promise)
+			promise = actor.delete(:foo, return_value: :promise)
 			
-			expect(variable.get).to be == 1
+			expect(promise.wait).to be == 1
 		end
 	end
 	
